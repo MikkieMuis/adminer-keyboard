@@ -6,6 +6,7 @@
 - Foreign key: Display new field in case of an error
 - PostgreSQL: Order NULL last
 - PostgreSQL: Display all SQL command warnings and only once
+- Editor: Display tinyint(1) as checkbox (bug #1246, regression from 5.4.2)
 - Croatian translation
 
 ## Adminer 5.4.2 (released 2026-02-08)
