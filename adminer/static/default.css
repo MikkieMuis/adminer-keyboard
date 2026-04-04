@@ -85,7 +85,9 @@ input.wayoff { left: -1000px; position: absolute; }
 #menu p, #logins, #tables { padding: .8em 1em; margin: 0; border-bottom: 1px solid #ccc; }
 #logins li, #tables li { list-style: none; }
 #dbs { overflow: hidden; }
-#logins, #tables { white-space: nowrap; overflow: hidden; }
+#logins { white-space: nowrap; overflow: hidden; }
+#tables { white-space: nowrap; }
+kbd.hint { display: inline-block; font-family: monospace; font-size: 1rem; font-weight: bold; color: #000; background: #f5e642; border: 1px solid #bba; border-radius: 3px; padding: 0 3px; margin-right: 3px; min-width: 1.4em; text-align: center; }
 #logins a, #tables a, #tables span { background: var(--bg); }
 #content { margin: 2em 0 0 21em; padding: 10px 20px 20px 0; }
 #lang { position: absolute; top: -2.6em; left: 0; padding: .3em 1em; }

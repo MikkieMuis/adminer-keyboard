@@ -192,4 +192,49 @@ function page_footer(string $missing = ""): void {
 	}
 	echo "</div>\n\n";
 	echo script("setupSubmitHighlight(document);");
+	echo script("
+(function() {
+	var chars = 'abcdefghijklmnopqrstuvwxyz';
+	var len = chars.length;
+	function makeLabel(i) {
+		return chars[Math.floor(i / len)] + chars[i % len];
+	}
+	function applyHints() {
+		var links = document.querySelectorAll('a[href]');
+		var buf = '';
+		var map = {};
+		var seen = {};
+		var i = 0;
+		links.forEach(function(a) {
+			// skip if already has a hint badge
+			if (a.querySelector('kbd.hint')) return;
+			// skip duplicate URLs
+			if (seen[a.href]) { return; }
+			seen[a.href] = true;
+			var label = makeLabel(i++);
+			var kbd = document.createElement('kbd');
+			kbd.className = 'hint';
+			kbd.textContent = label;
+			a.insertBefore(kbd, a.firstChild);
+			map[label] = a.href;
+		});
+		document.addEventListener('keydown', function(e) {
+			if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+			if (e.key.length === 1 && e.key >= 'a' && e.key <= 'z' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+				buf += e.key;
+				if (buf.length === 2) {
+					if (map[buf]) { window.location = map[buf]; }
+					buf = '';
+				}
+				e.preventDefault();
+			}
+		}, true);
+	}
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', applyHints);
+	} else {
+		applyHints();
+	}
+})();
+");
 }

@@ -1116,21 +1116,15 @@ class Adminer {
 	* @param TableStatus[] $tables
 	*/
 	function tablesPrint(array $tables): void {
-		echo "<ul id='tables'>" . script("mixin(qs('#tables'), {onmouseover: menuOver, onmouseout: menuOut});");
+		echo "<ul id='tables'>";
 		foreach ($tables as $table => $status) {
-			$table = "$table"; // do not highlight "0" as active everywhere
+			$table = "$table";
 			$name = adminer()->tableName($status);
 			if ($name != "" && !$status["partition"]) {
 				echo '<li><a href="' . h(ME) . 'select=' . urlencode($table) . '"'
 					. bold($_GET["select"] == $table || $_GET["edit"] == $table, "select")
-					. " title='" . lang('Select data') . "'>" . lang('select') . "</a> "
+					. ">$name</a>\n"
 				;
-				echo (support("table") || support("indexes")
-					? '<a href="' . h(ME) . 'table=' . urlencode($table) . '"'
-						. bold(in_array($table, array($_GET["table"], $_GET["create"], $_GET["indexes"], $_GET["foreign"], $_GET["trigger"], $_GET["check"], $_GET["view"])), (is_view($status) ? "view" : "structure"))
-						. " title='" . lang('Show structure') . "'>$name</a>"
-					: "<span>$name</span>"
-				) . "\n";
 			}
 		}
 		echo "</ul>\n";
