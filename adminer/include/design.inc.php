@@ -200,15 +200,14 @@ function page_footer(string $missing = ""): void {
 	function makeLabel(i) {
 		return chars[Math.floor(i / len)] + chars[i % len];
 	}
-	var BADGE = 'display:inline-block;font-family:monospace;font-size:1rem;font-weight:bold;color:#000;background:#f5e642;border:1px solid #bba;border-radius:3px;padding:0 3px;margin:0 3px 0 0;min-width:1.4em;text-align:center;cursor:default;line-height:1.4;vertical-align:baseline;position:relative;z-index:9999;';
+	var BADGE = 'display:inline-block;font-family:monospace;font-size:1.1rem;font-weight:bold;color:#000;background:#f5e642;border:1px solid #bba;border-radius:3px;padding:0 2px;margin:0 2px 0 0;min-width:1.3em;text-align:center;cursor:default;line-height:1;vertical-align:middle;position:relative;z-index:9999;';
 
 	var map = {};
-	var seenHref = {};
 	var idx = 0;
 	var buf = '';
 	var labelling = false;
 
-	var SELECTOR = 'a[href], input[type=submit], input[type=button], input[type=reset], button, input[type=checkbox], input[type=radio], input[type=text], input[type=password], input[type=number], input[type=search], textarea, select';
+	var SELECTOR = 'a[href], input[type=submit], input[type=button], input[type=reset], button, input[type=checkbox], input[type=radio], input[type=text], input:not([type]), input[type=password], input[type=number], input[type=search], textarea, select';
 
 	function isAlreadyLabelled(el) {
 		var prev = el.previousSibling;
@@ -224,8 +223,6 @@ function page_footer(string $missing = ""): void {
 		if (el.tagName === 'A') {
 			var href = el.href;
 			if (!href || el.getAttribute('href') === '#') return;
-			if (seenHref[href]) return;
-			seenHref[href] = true;
 		}
 		var label = makeLabel(idx++);
 		var span = document.createElement('span');
