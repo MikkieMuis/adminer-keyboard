@@ -194,46 +194,116 @@ function page_footer(string $missing = ""): void {
 	echo script("setupSubmitHighlight(document);");
 	echo script("
 (function() {
-	var chars = 'abcdefghijklmnopqrstuvwxyz';
+	var chars = 'qwertasdfgzxcvbyuiophjklnm'; // left-hand first, right-hand overflow
 	var len = chars.length;
+	var maxLabels = len * len; // 676
 	function makeLabel(i) {
 		return chars[Math.floor(i / len)] + chars[i % len];
 	}
-	function applyHints() {
-		var links = document.querySelectorAll('a[href]');
-		var buf = '';
-		var map = {};
-		var seen = {};
-		var i = 0;
-		links.forEach(function(a) {
-			// skip if already has a hint badge
-			if (a.querySelector('kbd.hint')) return;
-			// skip duplicate URLs
-			if (seen[a.href]) { return; }
-			seen[a.href] = true;
-			var label = makeLabel(i++);
-			var kbd = document.createElement('kbd');
-			kbd.className = 'hint';
-			kbd.textContent = label;
-			a.insertBefore(kbd, a.firstChild);
-			map[label] = a.href;
-		});
-		document.addEventListener('keydown', function(e) {
-			if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-			if (e.key.length === 1 && e.key >= 'a' && e.key <= 'z' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-				buf += e.key;
-				if (buf.length === 2) {
-					if (map[buf]) { window.location = map[buf]; }
-					buf = '';
-				}
-				e.preventDefault();
-			}
-		}, true);
+	var BADGE = 'display:inline-block;font-family:monospace;font-size:1rem;font-weight:bold;color:#000;background:#f5e642;border:1px solid #bba;border-radius:3px;padding:0 3px;margin:0 3px 0 0;min-width:1.4em;text-align:center;cursor:default;line-height:1.4;vertical-align:baseline;position:relative;z-index:9999;';
+
+	var map = {};
+	var seenHref = {};
+	var idx = 0;
+	var buf = '';
+	var labelling = false;
+
+	var SELECTOR = 'a[href], input[type=submit], input[type=button], input[type=reset], button, input[type=checkbox], input[type=radio], input[type=text], input[type=password], input[type=number], input[type=search], textarea, select';
+
+	function isAlreadyLabelled(el) {
+		var prev = el.previousSibling;
+		while (prev && prev.nodeType === 3) prev = prev.previousSibling;
+		return prev && prev.nodeType === 1 && prev.className === 'hint';
 	}
+
+	function labelElement(el) {
+		if (idx >= maxLabels) return;
+		if (isAlreadyLabelled(el)) return;
+		var type = (el.type || '').toLowerCase();
+		if (type === 'hidden') return;
+		if (el.tagName === 'A') {
+			var href = el.href;
+			if (!href || el.getAttribute('href') === '#') return;
+			if (seenHref[href]) return;
+			seenHref[href] = true;
+		}
+		var label = makeLabel(idx++);
+		var span = document.createElement('span');
+		span.className = 'hint';
+		span.textContent = label;
+		span.style.cssText = BADGE;
+		el.parentNode.insertBefore(span, el);
+		map[label] = el;
+	}
+
+	function labelAll(root) {
+		labelling = true;
+		(root || document).querySelectorAll(SELECTOR).forEach(labelElement);
+		labelling = false;
+	}
+
+	function updateHighlight(prefix) {
+		document.querySelectorAll('span.hint').forEach(function(s) {
+			s.style.background = (prefix && s.textContent.indexOf(prefix) === 0) ? '#ff9800' : '#f5e642';
+		});
+	}
+
+	function activate(el) {
+		var type = (el.type || '').toLowerCase();
+		if (el.tagName === 'A') {
+			window.location = el.href;
+		} else if (type === 'submit' || type === 'button' || type === 'reset' || el.tagName === 'BUTTON') {
+			el.click();
+		} else if (type === 'checkbox' || type === 'radio') {
+			el.checked = !el.checked;
+			el.dispatchEvent(new Event('change', {bubbles: true}));
+			if (el.onclick) el.onclick.call(el, new MouseEvent('click'));
+		} else {
+			el.focus();
+		}
+	}
+
+	document.addEventListener('keydown', function(e) {
+		var t = e.target;
+		if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT') return;
+		if (e.key.length === 1 && chars.indexOf(e.key) !== -1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+			buf += e.key;
+			updateHighlight(buf);
+			if (buf.length === 2) {
+				var el = map[buf];
+				buf = '';
+				updateHighlight('');
+				if (el) activate(el);
+			}
+			e.preventDefault();
+			e.stopPropagation();
+		} else if (e.key === 'Escape') {
+			buf = '';
+			updateHighlight('');
+		}
+	}, true);
+
+	var observer = new MutationObserver(function(mutations) {
+		if (labelling) return;
+		mutations.forEach(function(m) {
+			m.addedNodes.forEach(function(node) {
+				if (node.nodeType !== 1 || node.className === 'hint') return;
+				labelling = true;
+				if (node.matches && node.matches(SELECTOR)) labelElement(node);
+				node.querySelectorAll(SELECTOR).forEach(labelElement);
+				labelling = false;
+			});
+		});
+	});
+
 	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', applyHints);
+		document.addEventListener('DOMContentLoaded', function() {
+			labelAll();
+			observer.observe(document.body, {childList: true, subtree: true});
+		});
 	} else {
-		applyHints();
+		labelAll();
+		observer.observe(document.body, {childList: true, subtree: true});
 	}
 })();
 ");
