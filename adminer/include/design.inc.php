@@ -194,7 +194,7 @@ function page_footer(string $missing = ""): void {
 	echo script("setupSubmitHighlight(document);");
 	echo script("
 (function() {
-	var chars = 'qwertasdfgzxcvbyuiophjklnm'; // left-hand first, right-hand overflow
+	var chars = 'qwertasdfzxcvbyuophklnm'; // left-hand first, g and i removed to avoid Vimium-C conflicts
 	var len = chars.length;
 	var maxLabels = len * len; // 676
 	function makeLabel(i) {
@@ -248,13 +248,11 @@ function page_footer(string $missing = ""): void {
 	function activate(el) {
 		var type = (el.type || '').toLowerCase();
 		if (el.tagName === 'A') {
-			window.location = el.href;
+			el.click();
 		} else if (type === 'submit' || type === 'button' || type === 'reset' || el.tagName === 'BUTTON') {
 			el.click();
 		} else if (type === 'checkbox' || type === 'radio') {
-			el.checked = !el.checked;
-			el.dispatchEvent(new Event('change', {bubbles: true}));
-			if (el.onclick) el.onclick.call(el, new MouseEvent('click'));
+			el.click();
 		} else {
 			el.focus();
 		}
@@ -292,6 +290,20 @@ function page_footer(string $missing = ""): void {
 			});
 		});
 	});
+
+	// tableClick uses tr.firstChild.firstChild to find the checkbox.
+	// Our badge span is now td.firstChild, so we patch trCheck to
+	// skip non-input elements and find the actual checkbox.
+	if (typeof trCheck === 'function') {
+		var _trCheck = trCheck;
+		trCheck = function(el) {
+			if (el && el.tagName !== 'INPUT' && el.tagName !== 'SELECT') {
+				var input = el.parentNode && el.parentNode.querySelector('input[type=checkbox]');
+				if (input) el = input;
+			}
+			return _trCheck(el);
+		};
+	}
 
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function() {
